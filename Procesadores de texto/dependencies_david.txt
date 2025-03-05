@@ -1,0 +1,9 @@
+pypandoc
+PyRTF3
+python-docx
+PyPDF2
+textract
+reportlab
+beautifulsoup4
+striprtf
+odfpy
