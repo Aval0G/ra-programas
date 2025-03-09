@@ -1,5 +1,6 @@
 import os
-from tkinter import Tk, Label, Button, filedialog, StringVar, OptionMenu
+import tkinter as tk
+from tkinter import Tk, Label, Button, filedialog, StringVar, OptionMenu, filedialog, StringVar, ttk
 from docx import Document as DocxDocument
 from odf.opendocument import OpenDocumentText, load
 from odf.text import P
@@ -140,57 +141,120 @@ def convert_file(input_file, output_format, output_folder):
     
     if not reader:
         print(f"No reader implemented for '{ext}' files.")
-        return
+        return 1
     
-    text = reader(input_file)
+    # Manage error when reading the file
+    text = ""
+    try:
+        text = reader(input_file)
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return 1
+
     output_file = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(input_file))[0]}_converted{output_format}")
     
     writer = WRITERS.get(output_format)
     
     if not writer:
         print(f"No writer implemented for '{output_format}' files.")
-        return
+        return 1
     
-    writer(text, output_file)
+    # Manage error when writing the file
+    try:
+        writer(text, output_file)
+    except Exception as e:
+        print(f"Error writing file: {e}")
+        return 1
+    
     print(f"Conversion complete! File saved to: {output_file}")
 
-def select_input_file():
+    return 0
+
+def select_input_file(input_file_var):
     file_path = filedialog.askopenfilename(filetypes=[("All Files", "*.*")])
-    input_file_var.set(file_path)
+    if file_path:
+        input_file_var.set(file_path)
 
-def select_output_folder():
+def select_output_folder(output_folder_var):
     folder_path = filedialog.askdirectory()
-    output_folder_var.set(folder_path)
+    if folder_path:
+        output_folder_var.set(folder_path)
 
-def start_conversion():
+def start_conversion(input_file_var, output_folder_var, output_format_var, status_label):
     input_file = input_file_var.get()
     output_folder = output_folder_var.get()
     output_format = output_format_var.get()
-    
+
     if not input_file or not output_folder:
-        print("Please select both input file and output folder.")
+        status_label.config(text="ERROR: Select both input file and output folder!", foreground="red")
         return
+
+    input_file_name = os.path.basename(input_file)
+    error = convert_file(input_file, output_format, output_folder)  # Call the conversion function
     
-    convert_file(input_file, output_format, output_folder)
+    if error:
+        status_label.config(text="ERROR: Conversion failed!", foreground="red")
+    else:
+        status_label.config(text=f"SUCCESS: Converted {input_file_name} to {output_format}!", foreground="green")
+        # Open the output folder in the file explorer
+        os.startfile(output_folder)
 
-app = Tk()
-app.title("Text Converter")
+def main():
+    # Create the main application window
+    app = tk.Tk()
+    app.title("Text Converter")
 
-input_file_var = StringVar()
-output_folder_var = StringVar()
-output_format_var = StringVar(value=".pdf")
+    # Set window size
+    width, height = 700, 400
 
-Label(app, text="Select Input File:").grid(row=0, column=0, padx=10, pady=10)
-Button(app, text="Browse", command=select_input_file).grid(row=0, column=1, padx=10, pady=10)
-Label(app, textvariable=input_file_var).grid(row=0, column=2, padx=10, pady=10)
+    # Get screen width and height
+    screen_width = app.winfo_screenwidth()
+    screen_height = app.winfo_screenheight()
 
-Label(app, text="Select Output Folder:").grid(row=1, column=0, padx=10, pady=10)
-Button(app, text="Browse", command=select_output_folder).grid(row=1, column=1, padx=10, pady=10)
-Label(app, textvariable=output_folder_var).grid(row=1, column=2, padx=10, pady=10)
+    # Calculate x and y coordinates for the window to be centered
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
 
-Label(app, text="Select Output Format:").grid(row=2, column=0, padx=10, pady=10)
-OptionMenu(app, output_format_var, ".pdf", ".docx", ".odt", ".txt", ".rtf", ".html").grid(row=2, column=1, padx=10, pady=10)
+    # Set geometry with calculated position
+    app.geometry(f"{width}x{height}+{x}+{y}")
+    app.configure(bg="#f0f0f0")
 
-Button(app, text="Convert", command=start_conversion).grid(row=3, column=0, columnspan=3, padx=10, pady=10)
+    # Variables
+    input_file_var = StringVar()
+    output_folder_var = StringVar()
+    output_format_var = StringVar(value=".pdf")
 
-app.mainloop()
+    # Main frame using pack instead of grid
+    main_frame = ttk.Frame(app, padding=20)
+    main_frame.pack(expand=True)
+
+    # File Selection
+    ttk.Label(main_frame, text="Select Input File:").pack(anchor="w", pady=5)
+    file_entry = ttk.Entry(main_frame, textvariable=input_file_var, width=40, font=("Arial", 12), state='readonly')
+    file_entry.pack(pady=5)
+    ttk.Button(main_frame, text="Browse", command=lambda: select_input_file(input_file_var)).pack(pady=5)
+
+    # Output Folder Selection
+    ttk.Label(main_frame, text="Select Output Folder:").pack(anchor="w", pady=5)
+    folder_entry = ttk.Entry(main_frame, textvariable=output_folder_var, width=40, font=("Arial", 12), state='readonly')
+    folder_entry.pack(pady=5)
+    ttk.Button(main_frame, text="Browse", command=lambda: select_output_folder(output_folder_var)).pack(pady=5)
+
+    # Output Format Selection
+    ttk.Label(main_frame, text="Select Output Format:").pack(anchor="w", pady=5)
+    format_dropdown = ttk.Combobox(main_frame, textvariable=output_format_var, values=[".pdf", ".docx", ".odt", ".txt", ".rtf", ".html"], font=("Arial", 12), state='readonly')
+    format_dropdown.pack(pady=5)
+    format_dropdown.current(0)
+
+    # Convert Button
+    convert_button = ttk.Button(main_frame, text="Convert", command=lambda: start_conversion(input_file_var, output_folder_var, output_format_var, status_label))
+    convert_button.pack(pady=20)
+
+    # Status Label
+    status_label = ttk.Label(main_frame, text="", font=("Arial", 12, "bold"))
+    status_label.pack(pady=5)
+
+    app.mainloop()
+
+if __name__ == "__main__":
+    main()
