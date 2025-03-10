@@ -5,7 +5,10 @@ from PIL import Image
 
 # Load Cairo library explicitly for SVG support
 import ctypes
-ctypes.windll.LoadLibrary("C:\\Program Files\\GTK3-Runtime Win64\\bin\\libcairo-2.dll")
+# Use custom path to the libcairo-2.dll file (bin folder has to be in the same directory as the script)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+cairo_path = os.path.join(current_dir, "bin\\libcairo-2.dll")
+ctypes.windll.LoadLibrary(cairo_path)
 import cairosvg
 
 SUPPORTED_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.tiff', '.svg']
