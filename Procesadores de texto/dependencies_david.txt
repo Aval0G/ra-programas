@@ -7,3 +7,4 @@ reportlab
 beautifulsoup4
 striprtf
 odfpy
+tkinter
