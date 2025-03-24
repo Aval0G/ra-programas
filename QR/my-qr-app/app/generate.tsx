@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import QRCode from 'react-native-qrcode-svg';
 import Barcode, { Format } from 'react-native-barcode-builder';
 
-const validFormats = ['CODE128', 'EAN', 'CODE39', 'ITF', 'MSI', 'Pharmacode', 'Codabar'] as const;
+const validFormats = ['CODE128', 'EAN', 'CODE39', 'ITF', 'MSI', 'Pharmacode', 'Codabar', 'QR'] as const;
 type ValidFormat = (typeof validFormats)[number];
 
 export default function Generate() { 
@@ -57,7 +57,11 @@ export default function Generate() {
 
   const generateCode = () => {
     if (!validateInput()) return;
-    setGeneratedCode(<Barcode value={text} format={barcodeType as Format} />);
+    if (barcodeType === 'QR') {
+      setGeneratedCode(<QRCode value={text} size={200} />);
+    } else {
+      setGeneratedCode(<Barcode value={text} format={barcodeType as Format} />);
+    }
   };
 
   return ( 
@@ -75,7 +79,7 @@ export default function Generate() {
         onValueChange={(itemValue) => setBarcodeType(itemValue as ValidFormat)} 
       > 
         {validFormats.map((type) => (
-          <Picker.Item key={type} label={`Código de barras ${type}`} value={type} />
+          <Picker.Item key={type} label={`Código de ${type}`} value={type} />
         ))}
       </Picker> 
       <Button title="Generar Código" onPress={generateCode} /> 
