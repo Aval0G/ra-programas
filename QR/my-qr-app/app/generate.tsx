@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import QRCode from 'react-native-qrcode-svg';
 import Barcode, { Format } from 'react-native-barcode-builder';
 
-const validFormats = ['CODE128', 'EAN', 'CODE39', 'ITF', 'MSI', 'Pharmacode', 'Codabar', 'QR'] as const;
+const validFormats = ['CODE128', 'EAN', 'CODE39', 'ITF', 'MSI', 'Pharmacode', 'codabar', 'QR'] as const;
 type ValidFormat = (typeof validFormats)[number];
 
 export default function Generate() { 
@@ -14,7 +14,7 @@ export default function Generate() {
 
   const validateInput = () => {
     if (!text) {
-      alert('Por favor ingrese el texto para generar el código');
+      alert('Por favor ingrese el texto para generar el código.');
       return false;
     }
 
@@ -31,7 +31,7 @@ export default function Generate() {
           return false;
         }
         break;
-      case 'Codabar':
+      case 'codabar':
         if (!/^[A-D0-9]+$/.test(text) || text.length < 4 || text.length > 16) {
           alert('El código Codabar solo permite caracteres A-D y 0-9, con una longitud entre 4 y 16 caracteres.');
           return false;
